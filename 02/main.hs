@@ -1,6 +1,5 @@
 module Main (main) where
 
-import Data.Function
 import System.IO
 
 main :: IO ()
