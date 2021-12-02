@@ -14,8 +14,8 @@ main = do
 
 adjust :: (Int, Int, Int) -> (String, Int) -> (Int, Int, Int)
 adjust (h, d, a) ("down", x) = (h, d, a + x)
-adjust (h, d, a) ("up", x) = (h, d, a - x)
 adjust (h, d, a) ("forward", x) = (h + x, d + (x * a), a)
+adjust (h, d, a) ("up", x) = (h, d, a - x)
 adjust y _ = y
 
 heading :: [String] -> (Int, Int, Int)
@@ -25,10 +25,10 @@ pair :: [String] -> (String, Int)
 pair [d, x] = (d, read x :: Int)
 
 position :: [String] -> (Int, Int)
-position = foldr1 (\(h, d) (hx, dx) -> (h + hx, d + dx)) . map (step . pair . words)
+position = foldl step (0, 0) . map (pair . words)
 
-step :: (String, Int) -> (Int, Int)
-step ("down", x) = (0, x)
-step ("forward", x) = (x, 0)
-step ("up", x) = (0, -x)
-step (_, _) = (0, 0)
+step :: (Int, Int) -> (String, Int) -> (Int, Int)
+step (h, d) ("down", x) = (h, d + x)
+step (h, d) ("forward", x) = (h + x, d)
+step (h, d) ("up", x) = (h, d - x)
+step y _ = y
