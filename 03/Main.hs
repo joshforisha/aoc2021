@@ -20,11 +20,11 @@ bump t r = if r == '1' then t + 1 else t
 bumpf :: Int -> Int -> String -> Int
 bumpf i t rs = if rs !! i == '1' then t + 1 else t
 
-if' :: Bool -> a -> a -> a
-if' true yes no = if true then yes else no
-
-more :: Int -> Bool -> Int -> Char
-more len high x = if' (x >= (len - x)) (if' high '1' '0') (if' high '0' '1')
+most :: Int -> Bool -> Int -> Char
+most len high x =
+    if x >= (len - x)
+        then if high then '1' else '0'
+        else if high then '0' else '1'
 
 toDecimal :: String -> Int
 toDecimal = foldl' (\acc x -> acc * 2 + digitToInt x) 0
@@ -34,14 +34,16 @@ powerRates readings =
   let
     totals = foldl (zipWith bump) [0,0..] readings
     len = length readings
-    gammaString = map (more len True) totals
-    epsilonString = map (more len False) totals
   in
-    (toDecimal gammaString, toDecimal epsilonString)
+    ( toDecimal $ map (most len True) totals
+    , toDecimal $ map (most len False) totals
+    )
 
 rating :: Bool -> [String] -> Int -> Int
 rating _ [] _ = 0
 rating _ [reading] _ = toDecimal reading
 rating high readings i =
-  let crit = more (length readings) high (foldl (bumpf i) 0 readings)
-  in rating high (filter (\r -> (r !! i) == crit) readings) (i + 1)
+  let
+    crit = most (length readings) high (foldl (bumpf i) 0 readings)
+  in
+    rating high (filter (\r -> (r !! i) == crit) readings) (i + 1)
