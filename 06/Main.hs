@@ -2,7 +2,6 @@ module Main (main) where
 
 import Data.IntMap (IntMap, assocs, elems, empty, insertWith)
 import System.IO
-import qualified Data.IntMap as M
 
 main :: IO ()
 main = do
