@@ -13,9 +13,7 @@ main = do
     putStrLn $ "256 days: " ++ show (simulateDays 256)
 
 items :: String -> [String]
-items s = l : case s' of
-    [] -> []
-    (_:s'') -> items s''
+items s = l : (if null s' then [] else items (tail s'))
   where (l, s') = break (== ',') s
 
 update :: IntMap Int -> IntMap Int
