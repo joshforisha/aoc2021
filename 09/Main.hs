@@ -3,51 +3,53 @@ module Main (main) where
 import Control.Monad (join)
 import Data.Char (digitToInt)
 import Data.Function ((&))
+import Data.List (sort)
+import Data.Maybe (catMaybes)
 import System.IO
+
+type Height  = Int
+type Heights = [[Int]]
+type Pos     = (Int, Int)
 
 main :: IO ()
 main = do
-    input <- readFile "./09/test.txt"
-    let heights = (map (map digitToInt) . lines) input
-    let maxX = length (heights !! 0) - 1
-    let maxY = length heights - 1
-    let h = heightAt heights
-    let heightPairs =
-            walk2 (\x y -> (h x y, neighbors x y heights)) maxX maxY
-            & join
-    let lowPoints =
-            filter
-                (\(j, ns) -> foldl (\yes n -> yes && j < n) True ns)
-                heightPairs
-            & map ((+ 1) . fst)
-            & sum
-    putStrLn $ show lowPoints
+    input <- readFile "./09/map.txt"
+    let hs = input & lines & map (map digitToInt)
+    let lowPositions = lowPoints hs
+    putStrLn $ "# low points: " ++ show (lowPositions & map (risk hs) & sum)
+    let basins = map (basin hs []) lowPositions
+    let largestBasinsProduct = basins & map length & sort & reverse & take 3 & product
+    putStrLn $ "Product of 3 largest basins: " ++ show largestBasinsProduct
 
-heightAt :: [[Int]] -> Int -> Int -> Int
-heightAt hs x y = (hs !! y) !! x
+map' :: (Int -> a -> b) -> [a] -> [b]
+map' f = zipWith f [0..]
 
-walk :: (Int -> a) -> Int -> [a]
-walk f to = map (\x -> f x) [0..to]
+height :: Heights -> Pos -> Height
+height hs (x, y) = hs !! y !! x
 
-walk2 :: (Int -> Int -> a) -> Int -> Int -> [[a]]
-walk2 f toX toY =
-    map (\y -> map (\x -> f x y) [0..toX]) [0..toY]
-
-neighbors :: Int -> Int -> [[Int]] -> [Int]
-neighbors x y heights =
+neighbors :: Heights -> Pos -> [Pos]
+neighbors hs (x, y) =
   let
-    h = heightAt heights
-    maxX = length (heights !! y) - 1
-    maxY = length heights - 1
+    mx = (length . head) hs - 1
+    my = length hs - 1
   in
-    [ if x > 0 then Just (h (x - 1) y) else Nothing
-    , if y < maxY then Just (h x (y + 1)) else Nothing
-    , if x < maxX then Just (h (x + 1) y) else Nothing
-    , if y > 0 then Just (h x (y - 1)) else Nothing
-    ] & filter (\x -> case x of
-        Nothing -> False
-        Just _ -> True
-    ) & map (\x -> case x of
-        Nothing -> 0
-        Just y -> y
-    )
+    [ if y > 0  then Just (x, y - 1) else Nothing
+    , if x < mx then Just (x + 1, y) else Nothing
+    , if y < my then Just (x, y + 1) else Nothing
+    , if x > 0  then Just (x - 1, y) else Nothing
+    ] & catMaybes
+
+isLowPoint :: Heights -> Pos -> Bool
+isLowPoint hs p = neighbors hs p & map (height hs) & all (> height hs p)
+
+lowPoints :: Heights -> [Pos]
+lowPoints hs = map' (\y -> map' (\x _ -> (x, y))) hs & map (filter (isLowPoint hs)) & join
+
+risk :: Heights -> Pos -> Int
+risk = ((1 +) .) . height
+
+basin :: Heights -> [Pos] -> Pos -> [Pos]
+basin hs bs p@(x, y) =
+    if height hs p < 9 && not (elem p bs)
+        then foldl (basin hs) (p:bs) (neighbors hs p)
+        else bs
