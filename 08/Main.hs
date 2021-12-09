@@ -20,13 +20,15 @@ common :: String -> String -> Int
 common xs ys =
     foldr (\x z -> if elem x ys then z + 1 else z) 0 xs
 
-findByCommon :: Int -> String -> [String] -> String
-findByCommon c key keys =
-    maybe "" id (find (\k -> common key k == c) keys)
-
 findByLength :: Int -> [String] -> String
 findByLength len keys =
     maybe "" id (find ((== len) . length) keys)
+
+findCommon :: Int -> String -> [String] -> (String, [String])
+findCommon c key keys =
+    case find (\k -> common key k == c) keys of
+        Nothing -> ("", keys)
+        Just s -> (s, filter (/= s) keys)
 
 process :: ([String], [String]) -> Int
 process (ks, cs) =
@@ -38,15 +40,11 @@ process (ks, cs) =
     seven = findByLength 3 keys
     eight = findByLength 7 keys
     fiveKeys = filter ((== 5) . length) keys
-    three = findByCommon 2 one fiveKeys
-    fiveKeys' = filter (/= three) fiveKeys
+    (three, twoOrFive) = findCommon 2 one fiveKeys
     sixKeys = filter ((== 6) . length) keys
-    nine = findByCommon 4 four sixKeys
-    sixKeys' = filter (/= nine) sixKeys
-    zero = findByCommon 2 one sixKeys'
-    [six] = filter (/= zero) sixKeys'
-    five = findByCommon 5 six fiveKeys'
-    [two] = filter (/= five) fiveKeys'
+    (nine, zeroOrSix) = findCommon 4 four sixKeys
+    (zero, [six]) = findCommon 2 one zeroOrSix
+    (five, [two]) = findCommon 5 six twoOrFive
   in
     read (map (\code ->
         if code == zero then '0'
