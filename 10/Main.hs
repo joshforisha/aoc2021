@@ -47,10 +47,7 @@ points '>' = 25137
 points _ = 0
 
 legal :: String -> Bool
-legal line =
-    case parse line of
-        (_, Nothing) -> True
-        (_, Just _) -> False
+legal = isJust . snd . parse
 
 acPoints :: Char -> Int
 acPoints ')' = 1
