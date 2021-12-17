@@ -11,8 +11,8 @@ type Velocity = (Int, Int)
 
 main :: IO ()
 main = do
-    target <- parseInput <$> readFile "./17/input.txt"
-    let velocities = join (map (\x -> map (\y -> (x, y)) [-200..200]) [0..125])
+    target@((x0, x1), (y0, y1)) <- parseInput <$> readFile "./17/input.txt"
+    let velocities = join (map (\x -> map (\y -> (x, y)) [y0..abs y0]) [0..x1])
     let matches = shootMatches target velocities
     putStrLn $ "Vertical peak: " ++ show (maximum (map snd matches))
     putStrLn $ "# matches: " ++ show (length matches)
