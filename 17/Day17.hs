@@ -1,6 +1,7 @@
 module Day17 where
 
 import Control.Monad (join)
+import Flow
 import Data.Maybe
 import System.IO
 
@@ -21,9 +22,13 @@ splitBy y x = l : (if null s' then [] else splitBy y (tail s'))
   where (l, s') = break (== y) x
 
 parseInput :: String -> TargetArea
-parseInput str = ((read minX :: Int, read maxX :: Int), (read minY :: Int, read maxY :: Int))
-  where
-    [[minX, _, maxX], [minY, _, maxY]] = (map (splitBy '.' . drop 3) . splitBy ',' . drop 12 . init) str
+parseInput =
+    init
+    .> drop 12
+    .> splitBy ','
+    .> map (drop 3 .> splitBy '.')
+    .> map (\zs -> (read (head zs) :: Int, read (last zs) :: Int))
+    .> (\[x, y] -> (x, y))
 
 step :: (Velocity, Position) -> (Velocity, Position)
 step ((vx, vy), (x, y)) = ((maximum [0, vx - 1], vy - 1), (x + vx, y + vy))
@@ -42,4 +47,6 @@ shootAt t@((minX, maxX), (minY, maxY)) position highest velocity =
 
 shootMatches :: TargetArea -> [Velocity] -> [(Velocity, Int)]
 shootMatches t =
-    map (\(v, h) -> (v, fromJust h)) . filter (isJust . snd) . map (\v -> (v, shootAt t (0, 0) 0 v))
+    map (\v -> (v, shootAt t (0, 0) 0 v))
+    .> filter (snd .> isJust)
+    .> map (\(v, h) -> (v, fromJust h))
